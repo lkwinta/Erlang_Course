@@ -10,7 +10,7 @@
 -author("Łukasz Kwinta").
 
 %% API
--export([get_readings/0, number_of_readings/2]).
+-export([get_readings/0, number_of_readings/2, calculate_max/2, calculate_mean/2]).
 
 random_float(A, B) ->
   A + (B - A) * rand:uniform().
@@ -47,5 +47,33 @@ number_of_readings([H | T], Date) when erlang:element(3, H) == Date ->
 number_of_readings([_ | T], Date) -> number_of_readings(T, Date);
 number_of_readings([], _) -> 0.
 
-calculate_max(Readings, Type) ->
-  max()
+get_sensor_value(Reading, Type)  ->
+  proplists:get_value(Type, erlang:element(5, Reading)).
+
+calculate_max_tail(_, _, undefined) ->
+  io:format("Given reading type does not exists in each reading~n"),
+  {error, non_existing_reading_type};
+calculate_max_tail([H | T], Type, Accum) ->
+  calculate_max_tail(T, Type, max(get_sensor_value(H, Type), Accum));
+calculate_max_tail([], _, Accum) ->
+  Accum.
+
+calculate_max(Readings, _) when erlang:element(1, Readings) /= reading ->
+  io:format("Wrong Readings tuple~n"),
+  {error, wrong_readings_tuple};
+calculate_max([H | T], Type) ->
+  calculate_max_tail(T, Type, get_sensor_value(H, Type)).
+
+calculate_mean_tail(_, _, undefined, _) ->
+  io:format("Given reading type does not exists in each reading~n"),
+  {error, non_existing_reading_type};
+calculate_mean_tail([H | T], Type, Accum, Count) ->
+  calculate_mean_tail(T, Type, Accum + get_sensor_value(H, Type), Count + 1);
+calculate_mean_tail([], _, Accum, Count) ->
+  Accum / Count.
+
+calculate_mean(Readings, _) when erlang:element(1, Readings) /= reading ->
+  io:format("Wrong Readings tuple~n"),
+  {error, wrong_readings_tuple};
+calculate_mean([H | T], Type) ->
+  calculate_mean_tail(T, Type, get_sensor_value(H, Type), 1).
