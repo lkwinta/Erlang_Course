@@ -10,7 +10,7 @@
 -author("Łukasz Kwinta").
 
 %% API
--export([create_monitor/0, add_station/3, add_value/5, remove_value/4, get_one_value/4, get_station_mean/3, get_daily_mean/3]).
+-export([create_monitor/0, add_station/3, add_value/5, remove_value/4, get_one_value/4, get_station_mean/3, get_daily_mean/3, get_hourly_mean/4]).
 
 -record(monitor, {stations}).
 -record(station, {name, coordinates, measurements}).
@@ -191,12 +191,12 @@ get_station_mean(Coordinates, Type, Monitor) when is_record(Monitor, monitor) an
 get_station_mean(_, _, _) ->
   {error, invalid_arguments}.
 
-get_measurements(Date, Type, Station) when is_record(Station, station) ->
+get_measurements_date(Date, Type, Station) when is_record(Station, station) ->
   Measurements = lists:filter(fun (#measurement{date_time = {MDate, _}, type = MType}) -> MDate == Date andalso MType == Type end, Station#station.measurements),
   lists:map(fun (#measurement{value = Value}) -> Value end, Measurements).
 
 get_daily_mean(Type, Date, #monitor{stations = Stations}) when is_list(Stations) and is_list(Type) and is_tuple(Date) ->
-  MeasurementList = lists:flatmap(fun (Station) -> get_measurements(Date, Type, Station) end, Stations),
+  MeasurementList = lists:flatmap(fun (Station) -> get_measurements_date(Date, Type, Station) end, Stations),
   if
     length(MeasurementList) == 0 ->
       {error, no_measurements};
@@ -205,4 +205,26 @@ get_daily_mean(Type, Date, #monitor{stations = Stations}) when is_list(Stations)
   end;
 
 get_daily_mean(_, _, _) ->
+  {error, invalid_arguments}.
+
+get_measurements_hour(Time, Type, #station{measurements = Measurements}) ->
+  MeasurementsTime = lists:filter(fun (#measurement{date_time = {_, MTime}, type = MType}) -> MTime == Time andalso MType == Type end, Measurements),
+  lists:map(fun (#measurement{value = Value}) -> Value end, MeasurementsTime).
+
+get_mean_from_station(Time, Type, Station) when is_record(Station, station) ->
+  MeasurementList = get_measurements_hour(Time, Type, Station),
+  if
+    length(MeasurementList) == 0 ->
+      {error, no_measurements};
+    true ->
+      lists:sum(MeasurementList) / length(MeasurementList)
+  end.
+
+get_hourly_mean(Name, Type, Time, #monitor{stations = Stations}) when is_list(Stations) and is_list(Type) and is_tuple(Time) and is_list(Name) ->
+  get_mean_from_station(Time, Type, lists:keyfind(Name, #station.name, Stations));
+
+get_hourly_mean(Coordinates, Type, Time, #monitor{stations = Stations}) when is_list(Stations) and is_list(Type) and is_tuple(Time) and is_tuple(Coordinates) ->
+  get_mean_from_station(Time, Type, lists:keyfind(Coordinates, #station.coordinates, Stations));
+
+get_hourly_mean(_, _, _, _) ->
   {error, invalid_arguments}.
