@@ -10,7 +10,7 @@
 -author("lukasz").
 
 %% API
--export([get_random_locations/1, find_closest/2, find_for_person/3, find_closest_parallel/2]).
+-export([get_random_locations/1, find_closest/2, find_for_person/3, find_closest_parallel/2, time/0]).
 
 get_random_locations(Number) ->
   [{rand:uniform(10000), rand:uniform(10000)} || _ <- lists:seq(1, Number)].
@@ -34,3 +34,11 @@ find_closest_parallel(PeoplesLocations, SensorsLocations) ->
   [spawn(?MODULE, find_for_person, [PersonLocation, SensorsLocations, self()]) || PersonLocation <- PeoplesLocations],
   Dists = [receive M -> M end || _ <- PeoplesLocations],
   lists:min(Dists).
+
+time() ->
+  Sensors = get_random_locations(1000),
+  People = get_random_locations(20000),
+
+  {T1, _} = timer:tc(?MODULE, find_closest, [People, Sensors], millisecond),
+  {T2, _} = timer:tc(?MODULE, find_closest_parallel, [People, Sensors], millisecond),
+  {T1 / 1000.0, T2 / 1000.0}.
