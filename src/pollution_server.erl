@@ -17,7 +17,7 @@ start() ->
   ok.
 
 stop() ->
-  whereis(pollution_server) ! stop.
+  pollution_server ! stop.
 
 init() ->
   Monitor = pollution:create_monitor(),

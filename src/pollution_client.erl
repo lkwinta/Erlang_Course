@@ -13,7 +13,7 @@
 -export([add_station/2, add_value/4, remove_value/3, get_one_value/3, get_station_mean/2, get_daily_mean/2, get_hourly_mean/3]).
 
 call(Message) ->
-  whereis(pollution_server) ! {request, self(), Message},
+  pollution_server ! {request, self(), Message},
   receive
     {reply, Result} ->
       Result
