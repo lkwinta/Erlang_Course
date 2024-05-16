@@ -1,0 +1,85 @@
+# Pollution Parser
+
+## Loading data
+
+```elixir
+file_lines =
+  File.read!(__DIR__ <> "/AirlyData-ALL-50k.csv")
+  |> String.split("\n")
+```
+
+## Parsing data
+
+```elixir
+defmodule PollutionParser do
+  def identify_stations(readings) do
+    readings
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.map(&%{:id => &1.id, :name => &1.name, :location => &1.location})
+  end
+
+  def parse_line(line) do
+    [date_time, type, value, id, name, location] = line |> String.split(";")
+
+    %{
+      :date_time => parse_date(date_time),
+      :type => String.to_atom(type),
+      :value => String.to_float(value),
+      :id => String.to_integer(id),
+      :name => name,
+      :location =>
+        location
+        |> String.split(",")
+        |> Enum.map(&String.to_float/1)
+        |> List.to_tuple()
+    }
+  end
+
+  defp parse_date(date) do
+    [date, time] = date |> String.slice(0..18) |> String.split("T")
+
+    %{
+      :date =>
+        date
+        |> String.split("-")
+        |> Enum.map(&String.to_integer/1)
+        |> List.to_tuple(),
+      :time =>
+        time
+        |> String.split(":")
+        |> Enum.map(&String.to_integer/1)
+        |> List.to_tuple()
+    }
+  end
+end
+```
+
+```elixir
+readings =
+  file_lines
+  |> Enum.filter(&(String.length(&1) > 0))
+  |> Enum.map(&PollutionParser.parse_line/1)
+```
+
+```elixir
+stations_data = readings |> PollutionParser.identify_stations()
+```
+
+## Integration with server
+
+```elixir
+Code.append_path(__DIR__ <> "/pollution_app/_build/default/lib/pollution_app/ebin")
+```
+
+```elixir
+Application.start(:pollution_app)
+```
+
+```elixir
+:observer.start()
+```
+
+```elixir
+stations_data
+|> Enum.map(&:pollution_gen_server.add_station("#{&1.id} #{&1.name}", &1.location))
+```

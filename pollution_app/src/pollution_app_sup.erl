@@ -31,7 +31,7 @@ gen_statem_child_spec() -> #{
 
 init([]) ->
     SupFlags = #{strategy => one_for_all,
-                 intensity => 1,
+                 intensity => 5,
                  period => 1},
     ChildSpecs = [gen_server_child_spec(), gen_statem_child_spec()],
     {ok, {SupFlags, ChildSpecs}}.

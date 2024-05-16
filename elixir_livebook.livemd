@@ -1,0 +1,59 @@
+# Elixir lab
+
+## Section
+
+```elixir
+mapa = %{:key => "value", 4 => 5}
+```
+
+```elixir
+mapa = %{mapa | key: "sadas"}
+```
+
+```elixir
+Map.put(mapa, :key3, 5)
+```
+
+mapa[:key]
+
+```elixir
+b = 2
+```
+
+```elixir
+defmodule A do
+  @test "fdssda"
+
+  def test() do
+    @test
+  end
+end
+```
+
+```elixir
+A.test()
+```
+
+```elixir
+name = 121
+```
+
+```elixir
+"sadaasd #{name} sadsad"
+```
+
+```elixir
+defmodule G do
+  def factorial(0) do
+    1
+  end
+
+  def factorial(n) do
+    n * factorial(n - 1)
+  end
+end
+```
+
+```elixir
+G.factorial(5)
+```
