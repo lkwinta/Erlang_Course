@@ -5,7 +5,7 @@
 ```elixir
 file_lines =
   File.read!(__DIR__ <> "/AirlyData-ALL-50k.csv")
-  |> String.split("\n")
+  |> String.split(["\n", "\r\n"])
 ```
 
 ## Parsing data
@@ -38,17 +38,15 @@ defmodule PollutionParser do
   defp parse_date(date) do
     [date, time] = date |> String.slice(0..18) |> String.split("T")
 
-    %{
-      :date =>
-        date
-        |> String.split("-")
-        |> Enum.map(&String.to_integer/1)
-        |> List.to_tuple(),
-      :time =>
-        time
-        |> String.split(":")
-        |> Enum.map(&String.to_integer/1)
-        |> List.to_tuple()
+    {
+      date
+      |> String.split("-")
+      |> Enum.map(&String.to_integer/1)
+      |> List.to_tuple(),
+      time
+      |> String.split(":")
+      |> Enum.map(&String.to_integer/1)
+      |> List.to_tuple()
     }
   end
 end
@@ -63,6 +61,11 @@ readings =
 
 ```elixir
 stations_data = readings |> PollutionParser.identify_stations()
+```
+
+```elixir
+stations_data
+|> Enum.filter(&(&1.id == 9910))
 ```
 
 ## Integration with server
@@ -80,6 +83,106 @@ Application.start(:pollution_app)
 ```
 
 ```elixir
-stations_data
-|> Enum.map(&:pollution_gen_server.add_station("#{&1.id} #{&1.name}", &1.location))
+load_stations = fn ->
+  stations_data
+  |> Enum.map(&:pollution_gen_server.add_station("#{&1.id} #{&1.name}", &1.location))
+end
+```
+
+```elixir
+load_stations
+|> :timer.tc()
+|> elem(0)
+```
+
+```elixir
+load_pm10_data = fn ->
+  readings
+  |> Enum.filter(&(&1.type == :PM10))
+  |> Enum.map(&:pollution_gen_server.add_value(&1.location, &1.date_time, &1.type, &1.value))
+end
+```
+
+```elixir
+load_pm10_data
+|> :timer.tc()
+|> elem(0)
+```
+
+```elixir
+load_all_data = fn ->
+  readings
+  |> Enum.map(&:pollution_gen_server.add_value(&1.location, &1.date_time, &1.type, &1.value))
+end
+```
+
+```elixir
+load_all_data
+|> :timer.tc()
+|> elem(0)
+```
+
+```elixir
+station_mean = fn ->
+  :pollution_gen_server.get_station_mean("9910 Polska, Kraków, Studencka", :PM10)
+end
+```
+
+```elixir
+daily_mean = fn ->
+  :pollution_gen_server.get_daily_mean({2024, 2, 10}, :PM25)
+end
+```
+
+```elixir
+station_mean
+|> :timer.tc()
+```
+
+```elixir
+daily_mean
+|> :timer.tc()
+```
+
+```elixir
+defmodule PollutionDataLoader do
+  # TODO: End for homework
+  def identify_stations(readings) do
+    readings
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.map(&%{:id => &1.id, :name => &1.name, :location => &1.location})
+  end
+
+  def parse_line(line) do
+    [date_time, type, value, id, name, location] = line |> String.split(";")
+
+    %{
+      :date_time => parse_date(date_time),
+      :type => String.to_atom(type),
+      :value => String.to_float(value),
+      :id => String.to_integer(id),
+      :name => name,
+      :location =>
+        location
+        |> String.split(",")
+        |> Enum.map(&String.to_float/1)
+        |> List.to_tuple()
+    }
+  end
+
+  defp parse_date(date) do
+    [date, time] = date |> String.slice(0..18) |> String.split("T")
+
+    {
+      date
+      |> String.split("-")
+      |> Enum.map(&String.to_integer/1)
+      |> List.to_tuple(),
+      time
+      |> String.split(":")
+      |> Enum.map(&String.to_integer/1)
+      |> List.to_tuple()
+    }
+  end
+end
 ```

@@ -17,3 +17,4 @@ logs
 .idea
 rebar3.crashdump
 *~
+!.idea/modules.xml

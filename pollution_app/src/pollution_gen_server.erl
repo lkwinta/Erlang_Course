@@ -25,7 +25,7 @@ remove_value(Name, DateTime, Type)      -> gen_server:cast(?MODULE, {remove_valu
 get_one_value(Name, DateTime, Type)     -> gen_server:call(?MODULE, {get_one_value, Name, DateTime, Type}).
 get_station_mean(Name, Type)            -> gen_server:call(?MODULE, {get_station_mean, Name, Type}).
 get_daily_mean(DateTime, Type)          -> gen_server:call(?MODULE, {get_daily_mean, DateTime, Type}).
-get_hourly_mean(DateTime, Type, Hour)   -> gen_server:call(?MODULE, {get_hourly_mean, DateTime, Type, Hour}).
+get_hourly_mean(Name, Type, DateTime)   -> gen_server:call(?MODULE, {get_hourly_mean, Name, Type, DateTime}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -54,8 +54,8 @@ handle_call(Request, _From, Monitor) ->
   Result = case Request of
              {get_one_value, Name, DateTime, Type} -> pollution:get_one_value(Name, DateTime, Type, Monitor);
              {get_station_mean, Name, Type} -> pollution:get_station_mean(Name, Type, Monitor);
-             {get_daily_mean, DateTime, Type} -> pollution:get_daily_mean(DateTime, Type, Monitor);
-             {get_hourly_mean, DateTime, Type, Hour} -> pollution:get_hourly_mean(DateTime, Type, Hour, Monitor)
+             {get_daily_mean, DateTime, Type} -> pollution:get_daily_mean(Type, DateTime, Monitor);
+             {get_hourly_mean, Name, Type, DateTime} -> pollution:get_hourly_mean(Name, Type, DateTime, Monitor)
   end,
   case Result of
       {error, Reason} -> {reply, {error, Reason}, Monitor};
