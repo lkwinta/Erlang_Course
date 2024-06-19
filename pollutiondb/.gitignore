@@ -24,3 +24,5 @@ pollutiondb-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+*.db-shm
