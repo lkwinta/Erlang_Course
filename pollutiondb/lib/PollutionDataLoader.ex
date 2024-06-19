@@ -11,7 +11,7 @@ defmodule PollutionDataLoader do
   def upload_all_data_from_file() do
     readings = load_data()
     upload_stations(readings)
-    upload_stations(readings)
+    upload_readings(readings)
   end
 
   def upload_stations(readings) do
