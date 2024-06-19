@@ -186,3 +186,23 @@ defmodule PollutionDataLoader do
   end
 end
 ```
+
+```elixir
+a = fn x -> x * 1.2 end
+```
+
+```elixir
+a.(1.0)
+```
+
+```erlang
+B = fun (X) -> X*1.2 end.
+```
+
+```erlang
+B(1.0).
+```
+
+```elixir
+def sum(x)
+```
