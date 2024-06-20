@@ -26,3 +26,4 @@ pollutiondb-*.tar
 /tmp/
 
 *.db-shm
+.elixir_ls
